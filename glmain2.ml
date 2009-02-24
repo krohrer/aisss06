@@ -26,6 +26,7 @@ object (self)
   val mutable draw_tree = false
   val mutable draw_faces = true
   
+  val mutable alpha = 0.5
   val mutable light = false
   val mutable blend = true
   val mutable outline = true
@@ -109,7 +110,7 @@ object (self)
     in
     
     Gl.enable `lighting;
-    if blend then Gl.enable `blend else Gl.disable `blend;
+    if blend or (alpha < 1.) then Gl.enable `blend else Gl.disable `blend;
     GlFunc.blend_func `src_alpha `one_minus_src_alpha;
     Gl.enable `cull_face;
     GlDraw.cull_face `back;
@@ -122,8 +123,8 @@ object (self)
     
     if draw_faces then
       BspTree3d.draw_faces
-        ~drawb:(Proc.draw_face outline true)
-        ~drawf:(Proc.draw_face outline false)
+        ~drawb:(Proc.draw_face ~alpha outline true)
+        ~drawf:(Proc.draw_face ~alpha outline false)
         ~eye:vpos ftree;
       
     Gl.disable `lighting;
@@ -189,6 +190,10 @@ object (self)
         self#update_pos
     | 'b' | 'B' ->
         blend <- not blend;
+    | '+' | '=' ->
+	alpha <- min (alpha +. 0.1) 1.
+    | '-' | '_' ->
+	alpha <- max (alpha -. 0.1) 0.
     | 'l' | 'L' ->
         light <- not light;
     | 'n' | 'N' ->

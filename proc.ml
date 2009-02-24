@@ -45,11 +45,12 @@ let filter_front m1 m2 =
     (m1 < m2) || (List.mem m1 mat_translucent_lul && m2 != m1)
 let filter_back  m1 m2 = filter_front m2 m1
 
-let draw_face outline back hp (p,(m1,m2)) =
+let draw_face ?(alpha=1.0) outline back hp (p,(m1,m2)) =
   let n = if back then V3.neg (Plane.normal hp) else Plane.normal hp in
   GlDraw.normal3 n;
   let a, rgb = mat_color (max m1 m2) in
-  GlDraw.color ~alpha:a rgb;
+  let alpha = a *. alpha in
+  GlDraw.color ~alpha rgb;
   GlDraw.begins `polygon;
     List.iter GlDraw.vertex3 p;
   GlDraw.ends ();
