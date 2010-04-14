@@ -1,0 +1,5 @@
+.omakedb*
+*.omc
+*.cm[aixo]
+*.o
+\#*
