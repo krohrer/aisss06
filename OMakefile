@@ -47,6 +47,7 @@ USE_OCAMLFIND = true
 OCAMLFINDFLAGS = -syntax camlp4o
 
 OCAMLPACKS[] =
+	inspect
 	monad
 	lablGL.glut
 
@@ -73,7 +74,7 @@ BYTE_ENABLED = $(not $(OCAMLOPT_EXISTS))
 #
 # OCAMLFLAGS    += -syntax
 # OCAMLCFLAGS   +=
-# OCAMLOPTFLAGS +=
+OCAMLOPTFLAGS += -g
 # OCAML_LINK_FLAGS +=
 # OCAML_BYTE_LINK_FLAGS +=
 # OCAML_NATIVE_LINK_FLAGS +=

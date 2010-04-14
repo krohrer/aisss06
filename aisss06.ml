@@ -43,6 +43,8 @@ object (self)
     aspect <- float_of_int w /. float_of_int h;
     GlDraw.viewport ~x:0 ~y:0 ~w:w ~h:h
 
+  method world = Proc.worlds.(iworld mod Array.length Proc.worlds)
+
   method init =
     let dim = 1000.0 in
     let tree = Proc3d.emerge
@@ -50,13 +52,13 @@ object (self)
       ~dim:dim
       ~lod:lod
       ~transform:AT3.identity
-      Proc.worlds.(iworld mod Array.length Proc.worlds)
+      self#world
     in
-    bsptree <- tree;
-    ftree <- BspTree3d.to_faces
-      ~filterb:Proc.filter_front
-      ~filterf:Proc.filter_back
-      tree
+      bsptree <- tree;
+      ftree <- BspTree3d.to_faces
+	~filterb:Proc.filter_front
+	~filterf:Proc.filter_back
+	tree
 
   method render () =
     GlMat.mode `projection;
@@ -101,12 +103,12 @@ object (self)
 
     let draw_poly1 hp p =
       let n = Plane.normal hp in
-      GlDraw.normal3 n;
-      GlDraw.color ~alpha:0.1 (V3.mul1 (V3.add V3.one (Plane.normal hp)) 0.5);
-      GlDraw.color ~alpha:0.3 V3.zero;
-      GlDraw.begins `line_loop;
+	GlDraw.normal3 n;
+	GlDraw.color ~alpha:0.1 (V3.mul1 (V3.add V3.one (Plane.normal hp)) 0.5);
+	GlDraw.color ~alpha:0.3 V3.zero;
+	GlDraw.begins `line_loop;
         List.iter GlDraw.vertex3 p;
-      GlDraw.ends ()
+	GlDraw.ends ()
     in
     
     Gl.enable `lighting;
@@ -160,6 +162,10 @@ object (self)
     | 'i' | 'I' ->
         seed <- Random.bits ();
         self#init
+    | 'p' | 'P' ->
+	Inspect.dump_dot ~max_size:0 ~cmd:"dot" bsptree
+    | 'o' | 'O' ->
+	Inspect.dump_dot ~max_size:0 self#world
     | 'w' | 'W' ->
         vvel <- vvel +. 0.5;
         self#update_pos
