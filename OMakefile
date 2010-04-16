@@ -44,12 +44,6 @@
 # This project requires ocamlfind (default - false).
 #
 USE_OCAMLFIND = true
-OCAMLFINDFLAGS = -syntax camlp4o
-
-OCAMLPACKS[] =
-	inspect
-	monad
-	lablGL.glut
 
 if $(not $(OCAMLFIND_EXISTS))
 	eprintln(This project requires ocamlfind, but is was not found.)
@@ -90,6 +84,14 @@ OCAMLOPTFLAGS += -g
 ################################################
 # Build an OCaml program
 #
+
+OCAMLFINDFLAGS = -syntax camlp4o
+
+OCAMLPACKS[] =
+	inspect
+	monad
+	extlib
+	lablGL.glut
 
 FILES[] =
 	bspTree3d

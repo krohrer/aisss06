@@ -5,7 +5,7 @@ type material_t = int
 type op = Union | Intersection | Difference | InvDifference | SymDifference
 
 type t
-type face_t = Polygon.t * (material_t * material_t)
+type face_t = Polygon.t * material_t * material_t
 type faces_t
 
 type draw_fn = Plane.t -> face_t -> unit

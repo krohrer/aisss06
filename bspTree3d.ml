@@ -1,5 +1,6 @@
 open Math3d
 open Geom3d
+open ExtList
 
 (* Each bit indicated the absence/presence of a material
  * thus there are 30 pure materials on a 32-bit machine
@@ -15,20 +16,14 @@ open Geom3d
 type material_t = int
 type op = Union | Intersection | Difference | InvDifference | SymDifference
 
-type binary_partitioner_t = Plane.t * Polygon.t
 type t =
 | Cell of material_t
-| Node of node_t
-and node_t = binary_partitioner_t * neg_t * pos_t
-and neg_t = t
-and pos_t = t
+| Node of Plane.t * Polygon.t * t * t
 
-type face_t = Polygon.t * (material_t * material_t)
+type face_t = Polygon.t * material_t * material_t
 type faces_t =
 | DCell
-| DNode of (Plane.t * backfaces_t * frontfaces_t) * faces_t * faces_t
-and backfaces_t = face_t list
-and frontfaces_t = face_t list
+| DNode of Plane.t * face_t list * face_t list * faces_t * faces_t
 
 type draw_fn = Plane.t -> face_t -> unit
 type filter_fn = material_t -> material_t -> bool
@@ -42,15 +37,15 @@ let cell m = Cell m
  * consolidate cells with the same attribute, apply postfix to each node
  *)
 let rec condense = function
-| Node (bp, neg, pos) -> begin
+| Node (h, p, neg, pos) -> (
     let neg = condense neg in
     let pos = condense pos in
     match neg, pos with
     | Cell m1, Cell m2 ->
-        if m1 = m2 then Cell m1 else Node (bp, neg, pos)
+        if m1 = m2 then Cell m1 else Node (h, p, neg, pos)
     | _ ->
-        Node (bp, neg, pos)
-  end
+        Node (h, p, neg, pos)
+  )
 | Cell m -> Cell m
 
 (* complement:
@@ -58,8 +53,8 @@ let rec condense = function
 let rec complement = function
 | Cell m ->
     Cell (lnot m)
-| Node (bp, neg, pos) ->
-    Node (bp, complement neg, complement pos)
+| Node (h, p, neg, pos) ->
+    Node (h, p, complement neg, complement pos)
 
 let switch_op = function
 | Union -> Union
@@ -86,7 +81,7 @@ let rec merge_cell_with_tree op m1 t2 =
         | SymDifference -> Cell (m1 lxor m2)
       end
   (* FIXME : is this correct ? *)
-  | Node (bp, neg, pos) ->
+  | Node (h, p, neg, pos) ->
       if m1 = mat_none then
         match op with
         | Union         -> t2
@@ -104,7 +99,7 @@ let rec merge_cell_with_tree op m1 t2 =
       else
         let neg = merge_cell_with_tree op m1 neg in
         let pos = merge_cell_with_tree op m1 pos in
-          Node (bp, neg, pos)
+          Node (h, p, neg, pos)
   
 let merge_tree_with_cell op t1 a =
   merge_cell_with_tree (switch_op op) a t1
@@ -112,13 +107,11 @@ let merge_tree_with_cell op t1 a =
 (* partition:
  * split every node and cell by P to receive tree that contains P
  *)
-let rec partition p = function
+let rec partition hp1 shp1 = function
 | Cell m ->
     Cell m, Cell m
-| Node (bp, neg, pos) ->
+| Node (hp2, shp2, neg, pos) ->
   begin
-    let hp1, shp1 = p in
-    let hp2, shp2 = bp in
     let shp1vs2 = Plane.classify_points hp2 shp1 in
     let shp2vs1 = Plane.classify_points hp1 shp2 in
     match shp1vs2, shp2vs1 with
@@ -129,20 +122,20 @@ let rec partition p = function
     (* _, Pos -> new node on positive side *)
 
     | FTest.NegSpace, FTest.NegSpace ->
-        let neg_in_neg, neg_in_pos = partition p neg in
-          Node (bp, neg_in_neg, pos), neg_in_pos
+        let neg_in_neg, neg_in_pos = partition hp1 shp1 neg in
+          Node (hp2, shp2, neg_in_neg, pos), neg_in_pos
           
     | FTest.NegSpace, FTest.PosSpace ->
-        let neg_in_neg, neg_in_pos = partition p neg in
-          neg_in_neg, Node (bp, neg_in_pos, pos)
+        let neg_in_neg, neg_in_pos = partition hp1 shp1 neg in
+          neg_in_neg, Node (hp2, shp2, neg_in_pos, pos)
           
     | FTest.PosSpace, FTest.NegSpace ->
-        let pos_in_neg, pos_in_pos = partition p pos in
-          Node (bp, neg, pos_in_neg), pos_in_pos 
+        let pos_in_neg, pos_in_pos = partition hp1 shp1 pos in
+          Node (hp2, shp2, neg, pos_in_neg), pos_in_pos 
           
     | FTest.PosSpace, FTest.PosSpace ->
-        let pos_in_neg, pos_in_pos = partition p pos in
-            pos_in_neg, Node (bp, neg, pos_in_pos)
+        let pos_in_neg, pos_in_pos = partition hp1 shp1 pos in
+            pos_in_neg, Node (hp2, shp2, neg, pos_in_pos)
 
     | FTest.EpsSpace, FTest.EpsSpace ->
         let n1, n2 = Plane.normal hp1, Plane.normal hp2 in
@@ -153,15 +146,11 @@ let rec partition p = function
 
     | FTest.SpanSpace, FTest.SpanSpace ->
         let shp1_in, shp1_ip = Polygon.split hp2 shp1 in
-        let bp1_in = (hp1, shp1_in) in
-        let bp1_ip = (hp1, shp1_ip) in
-        let neg_in, neg_ip = partition bp1_in neg in
-        let pos_in, pos_ip = partition bp1_ip pos in
+        let neg_in, neg_ip = partition hp1 shp1_in neg in
+        let pos_in, pos_ip = partition hp1 shp1_ip pos in
         let shp2_in, shp2_ip = Polygon.split hp1 shp2 in
-        let bp2_in = (hp2, shp2_in) in
-        let bp2_ip = (hp2, shp2_ip) in
-          Node (bp2_in, neg_in, pos_in),
-          Node (bp2_ip, neg_ip, pos_ip)
+          Node (hp2, shp2_in, neg_in, pos_in),
+          Node (hp2, shp2_ip, neg_ip, pos_ip)
 
     | FTest.EpsSpace, _
     | _, FTest.EpsSpace
@@ -179,13 +168,13 @@ let rec merge op t1 t2 =
       condense (merge_cell_with_tree op a t)
   | t, Cell a ->
       condense (merge_tree_with_cell op t a)
-  | Node (bp, neg, pos), t2 ->
-      let t2_neg, t2_pos = partition bp t2 in
+  | Node (h, p, neg, pos), t2 ->
+      let t2_neg, t2_pos = partition h p t2 in
       let t2_neg = condense t2_neg in
       let t2_pos = condense t2_pos in
       let neg = merge op neg t2_neg in
       let pos = merge op pos t2_pos in
-      Node (bp, neg, pos)
+	Node (h, p, neg, pos)
  
 (* shortcuts *)
 let union t1 t2           = condense (merge Union t1 t2)
@@ -200,7 +189,7 @@ let sym_difference t1 t2  = condense (merge SymDifference t1 t2)
  *)
 let rec draw_tree ~draw ~eye = function
 | Cell _ -> ()
-| Node ((hp, shp), neg, pos) ->
+| Node (hp, shp, neg, pos) ->
     if Plane.distance_to_point hp eye < 0.0 then begin
       (* pos is facing away from viewer *)
       draw_tree ~draw:draw ~eye:eye pos;
@@ -221,8 +210,7 @@ let create_from_plane ~dim ~mneg ~mpos p =
   let shp = Polygon.create_slab_from_plane ~ccw:true ~dim:dim p in
   if shp != [] then
     (* universe box is split in half by plane *)
-    let bp = p, shp in
-      Node (bp, Cell mneg, Cell mpos)
+    Node (p, shp, Cell mneg, Cell mpos)
   else
     (* universe box is completely on one side of the plane *)
     match Plane.classify_point p V3.zero with
@@ -244,49 +232,52 @@ let create_from_polyhedron ~dim ~mat ph =
 (* to_faces:
  * make representation suitable for polygon-based rendering
  *)
-let split_face_fold hp (nfaces,pfaces) (f, t) =
+let split_face_fold hp (nfaces,pfaces) (f, m1, m2) =
   match Plane.classify_points hp f with
   | FTest.NegSpace ->
-      ((f, t) :: nfaces, pfaces)
+      ((f, m1, m2) :: nfaces, pfaces)
   | FTest.PosSpace ->
-      (nfaces, (f, t) :: pfaces)
+      (nfaces, (f, m1, m2) :: pfaces)
   | FTest.SpanSpace ->
       let neg, pos = Polygon.split hp f in
-        ((neg, t) :: nfaces, (pos, t) :: pfaces)
+        ((neg, m1, m2) :: nfaces, (pos, m1, m2) :: pfaces)
   | FTest.EpsSpace -> failwith "BspTree3d.to_faces: split_face_fold"
   
 let split_faces hp faces =
+  (* Ok, it is clear what is happening here *)
   List.fold_left (split_face_fold hp) ([], []) faces
   
+(* WHAT THE FUCK IS HAPPENING HERE?  I guess we are splitting the
+   faces of the eps_space recusively, and tag them *)
 let rec classify_faces tag faces = function
-| Cell a -> List.map (tag a) faces
-| Node ((hp, _), neg, pos) ->
-    let fneg, fpos = split_faces hp faces in
-    let fneg = classify_faces tag fneg neg in
-    let fpos = classify_faces tag fpos pos in
-       fneg @ fpos
+  | Cell a -> List.map (tag a) faces
+  | Node (hp, _, neg, pos) ->
+      let fneg, fpos = split_faces hp faces in
+      let fneg = classify_faces tag fneg neg in
+      let fpos = classify_faces tag fpos pos in
+	fneg @ fpos
 
 let rec to_faces ?(filterb=(!=)) ?(filterf=(!=)) = function
-| Cell _ -> DCell
-| Node ((hp, shp), neg, pos) ->
-    (* no particular reason for 0 here, just a placeholder, really *)
-    let faces = [shp, (0, 0)] in
+  | Cell _ -> DCell
+  | Node (hp, shp, neg, pos) ->
+      (* no particular reason for 0 here, just a placeholder, really *)
+    let faces = [shp, 0, 0] in
     (* classify against both subtrees *)
     let faces = classify_faces tag_neg faces neg in
     let faces = classify_faces tag_pos faces pos in
     (* find front and backfaces, reject other variants *)
-    let bfaces = List.filter (fun (_, (a,b)) -> filterb a b) faces in
-    let ffaces = List.filter (fun (_, (a,b)) -> filterf a b) faces in
+    let bfaces = List.filter (fun (_, a, b) -> filterb a b) faces in
+    let ffaces = List.filter (fun (_, a, b) -> filterf a b) faces in
     (* reverse winding of backfaces *)
-    let rev_winding (p, t) = List.rev p, t in
+    let rev_winding (p, m1, m2) = (List.rev p, m1, m2) in
     let bfaces = List.map rev_winding bfaces in
     (* reverse application of to_faces *)
     let neg = to_faces ~filterb:filterb ~filterf:filterf neg in
     let pos = to_faces ~filterb:filterb ~filterf:filterf pos in
-    DNode ((hp, bfaces, ffaces), neg, pos)
+    DNode (hp, bfaces, ffaces, neg, pos)
   
-and tag_neg m1 (f, (_, m2)) = f, (m1, m2)
-and tag_pos m2 (f, (m1, _)) = f, (m1, m2)
+and tag_neg m1 (f, _, m2) = (f, m1, m2)
+and tag_pos m2 (f, m1, _) = (f, m1, m2)
 
 (* draw_none:
  *)
@@ -296,7 +287,7 @@ let draw_none _ _ = ()
  *)
 let rec draw_faces ?(drawb=draw_none) ?(drawf=draw_none) ~eye = function
 | DCell -> ()
-| DNode ((hp, back, front), neg, pos) ->
+| DNode (hp, back, front, neg, pos) ->
     if Plane.distance_to_point hp eye < 0.0 then begin
       (* pos is facing away from viewer, show backfaces *)
       draw_faces ~drawb:drawb ~drawf:drawf ~eye:eye pos;
