@@ -164,28 +164,9 @@ object (self)
         self#init
     | 'p' | 'P' ->
 	let follow ~src ~field ~dst =
-	  let is_float3 r =
-	    if Obj.tag r = 0 && Obj.size r = 3 then
-	      let isd0 = Obj.tag (Obj.field r 0) == Obj.double_tag
-	      and isd1 = Obj.tag (Obj.field r 1) == Obj.double_tag
-	      and isd2 = Obj.tag (Obj.field r 2) == Obj.double_tag
-	      in
-		not (isd0 && isd1 && isd2)
-	    else
-	      false
-	  in
-	  let is_nil r =
-	    Obj.tag r = Obj.int_tag && r = Obj.repr 0
-	  in
-	  let rec is_polygon r =
-	    if Obj.tag r = 0 && Obj.size r = 2 then
-	      is_float3 (Obj.field r 0) && is_polygon (Obj.field r 1)
-	    else
-	      is_nil r
-	  in
-	    not (is_polygon dst)
+	  Obj.tag dst < Obj.no_scan_tag && Obj.size dst = 4
 	in
-	let context = Inspect.Dot.make_context ~max_fields:20 ~follow () in
+	let context = Inspect.Dot.make_context ~max_fields:0 ~follow () in
 	  Inspect.Dot.dump_osx ~context ~cmd:"dot" bsptree
     | 'o' | 'O' ->
 	let context = Inspect.Dot.make_context ~max_fields:0 () in
