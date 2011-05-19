@@ -49,7 +49,6 @@ OCAMLFINDFLAGS = -syntax camlp4o
 OCAMLPACKS[] =
 	inspect
 	monad
-	lablGL.glut
 
 if $(not $(OCAMLFIND_EXISTS))
 	eprintln(This project requires ocamlfind, but is was not found.)
@@ -72,10 +71,10 @@ BYTE_ENABLED = $(not $(OCAMLOPT_EXISTS))
 #
 # Various options
 #
-# OCAMLFLAGS    += -syntax
+OCAMLFLAGS    += -I +lablgl
 # OCAMLCFLAGS   +=
 OCAMLOPTFLAGS += -g
-# OCAML_LINK_FLAGS +=
+OCAML_LINK_FLAGS += -I +lablgl
 # OCAML_BYTE_LINK_FLAGS +=
 # OCAML_NATIVE_LINK_FLAGS +=
 
@@ -104,7 +103,7 @@ FILES[] =
 PROGRAM = aisss06
 OCAML_LIBS +=
 OCAML_CLIBS +=
-OCAML_OTHER_LIBS +=
+OCAML_OTHER_LIBS += lablgl lablglut
 OCAML_LIB_FLAGS +=
 
 all: $(OCamlProgram $(PROGRAM), $(FILES))

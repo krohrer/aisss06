@@ -163,9 +163,9 @@ object (self)
         seed <- Random.bits ();
         self#init
     | 'p' | 'P' ->
-	Inspect.dump_dot ~max_size:0 ~cmd:"dot" bsptree
+	Inspect.Dot.dump_osx bsptree
     | 'o' | 'O' ->
-	Inspect.dump_dot ~max_size:0 self#world
+	Inspect.Dot.dump_osx self#world
     | 'w' | 'W' ->
         vvel <- vvel +. 0.5;
         self#update_pos
