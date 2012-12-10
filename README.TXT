@@ -5,10 +5,10 @@ Project for the Advanced Image Synthesis Course at ETHZ, Summer 06.
  /___/| |    | |    Revision 113405072006                /_____/ |  _|   | |
 |   | |_|    | |                                        |     |  | /_|   | |
 |   |/__|    | |    Author : Kaspar Rohrer              |     | / |  |   | |
-|___|___|____|/     E-mail : krohrer@student.ethz.ch    |_____|/  |__|___|/
-________________________________________________________________________________
-_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  
-________________________________________________________________________________
+|___|___|____|/     E-mail : kaspar.rohrer@gmail.com    |_____|/  |__|___|/
+______________________________________________________________________________
+_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  __  _  _  _  _  _  _  _  _  
+______________________________________________________________________________
 
 PREREQUISITES
 -------------
@@ -18,17 +18,27 @@ You will need two things in order to compile this program:
 ocaml           http://caml.inria.fr/
 lablgl          http://wwwfun.kurims.kyoto-u.ac.jp/soft/olabl/lablgl.html
 
-If you have some kind of package management software installed on your machine (e.g. apt-get on linux, or darwinports on a mac), these two packages might be readily available. 
+If you have some kind of package management software installed on your
+machine (e.g. apt-get on linux, or darwinports on a mac), these two
+packages might be readily available.
 
-In order to support monadic expressions in Ocaml similar to those found in Haskell, the pa_monad syntax extension has been used. This extension to the ocaml compiler is already included in the pa_monad directory. Further information about pa_monad can be found at
+In order to support monadic expressions in Ocaml similar to those
+found in Haskell, the pa_monad syntax extension has been used. This
+extension to the ocaml compiler is already included in the pa_monad
+directory. Further information about pa_monad can be found at
 
 http://www.cas.mcmaster.ca/~carette/pa_monad/
 
 COMPILATION
 -----------
 
-After the above prerequisites have been satisfied, you may build the program by simply calling `make` on the CLI. After successful compilation, you can start the program with by calling `./glmain.opt`
-There are two build targets: The default one is 'glmain.opt', which is compiled to machine code rather than to bytecode like 'glmain'. Bytecode compilation is faster though and can be used to debug the program.
+After the above prerequisites have been satisfied, you may build the
+program by simply calling `make` on the CLI. After successful
+compilation, you can start the program with by calling `./aisss06.native`
+There are two build targets: The default one is 'aisss06.native', which is
+compiled to machine code rather than to bytecode like
+'aisss06.byte. Bytecode compilation is faster though and can be used to
+debug the program.
 
 KEYBINDINGS
 -----------
@@ -56,6 +66,12 @@ tab : toggle fullscreen
 TIPS & TRICKS
 -------------
 
-If you own a machine that is a lot faster than mine (which is well possible), smooth movements might be just a little too responsive. To get acceptable movements, try adjusting the factors on line 240 in glmain2.ml. The whole player movements are basically just a big hack, so please accept my apologies.
+If you own a machine that is a lot faster than mine (which is well
+possible), smooth movements might be just a little too responsive. To
+get acceptable movements, try adjusting the factors on line 240 in
+aisss06.ml. The whole player movements are basically just a big hack,
+so please accept my apologies.
 
-If you're on a mac, switch smooth movements off before taking screenshots. Otherwise, you might get a snapshot where the image is only partially rendered.
+If you're on a mac, switch smooth movements off before taking
+screenshots. Otherwise, you might get a snapshot where the image is
+only partially rendered.
