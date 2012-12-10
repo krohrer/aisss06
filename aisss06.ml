@@ -23,7 +23,7 @@ object (self)
   val mutable ftree = BspTree3d.to_faces BspTree3d.empty
   val mutable iworld = 0
 
-  val mutable draw_tree = false
+  val mutable draw_tree = true
   val mutable draw_faces = true
   
   val mutable alpha = 0.5
@@ -54,6 +54,7 @@ object (self)
       ~transform:AT3.identity
       self#world
     in
+      Printf.eprintf "Initializing world %d with seed %d and LOD = %d.\n%!" iworld seed lod;
       bsptree <- tree;
       ftree <- BspTree3d.to_faces
 	~filterb:Proc.filter_front
@@ -114,8 +115,13 @@ object (self)
     Gl.enable `lighting;
     if blend or (alpha < 1.) then Gl.enable `blend else Gl.disable `blend;
     GlFunc.blend_func `src_alpha `one_minus_src_alpha;
-    Gl.enable `cull_face;
-    GlDraw.cull_face `back;
+    if true then (
+      Gl.enable `cull_face;
+      GlDraw.cull_face `back;
+    )
+    else (
+      Gl.disable `cull_face
+    );
     Gl.enable `depth_test;
       
     GlFunc.depth_func `always;
@@ -135,7 +141,7 @@ object (self)
     if draw_tree then
       BspTree3d.draw_tree
         ~draw:(draw_poly1)
-        ~eye:vpos bsptree;      
+        ~eye:vpos bsptree;
     
     if draw_tree then begin
       GlMat.push ();
@@ -163,10 +169,12 @@ object (self)
         seed <- Random.bits ();
         self#init
     | 'p' | 'P' ->
-        let follow ~src ~field ~dst =
-	  Obj.tag dst < Obj.no_scan_tag && Obj.size dst = 4
+	let context =
+	  let follow ~src ~field ~dst =
+	    Obj.tag dst < Obj.no_scan_tag && Obj.size dst = 4
+	  in
+	    Inspect.Dot.make_context ~max_fields:0 ~follow ()
 	in
-	let context = Inspect.Dot.make_context ~max_fields:0 ~follow () in
 	  Inspect.Dot.dump_osx ~context ~cmd:"dot" bsptree
     | 'o' | 'O' ->
 	let context = Inspect.Dot.make_context ~max_fields:0 () in
