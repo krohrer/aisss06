@@ -1,5 +1,7 @@
-.omakedb*
-*.omc
+_build
+*.native
+*.byte
 *.cm[aixo]
 *.o
 \#*
+*~
