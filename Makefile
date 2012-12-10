@@ -1,14 +1,15 @@
 .PHONY: all byte native
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind
+PROG=aisss06
 
-all: aisss06.native aisss06.byte
+all: native byte
 
-aisss06.native:
-	$(OCAMLBUILD) $@
+native:
+	$(OCAMLBUILD) $(PROG).native
 
-aisss06.byte:
-	$(OCAMLBUILD) $@
+byte:
+	$(OCAMLBUILD) $(PROG).byte
 
 clean:
 	$(OCAMLBUILD) -clean
