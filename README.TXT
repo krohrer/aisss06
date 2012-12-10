@@ -13,28 +13,24 @@ ______________________________________________________________________________
 PREREQUISITES
 -------------
 
-You will need two things in order to compile this program:
+You will need four things in order to compile this program:
 
 ocaml           http://caml.inria.fr/
-lablgl          http://wwwfun.kurims.kyoto-u.ac.jp/soft/olabl/lablgl.html
+lablgl          https://forge.ocamlcore.org/projects/lablgl/
+caml-inspect	https://github.com/krohrer/caml-inspect
+ocaml-extlib	http://code.google.com/p/ocaml-extlib/
+pa_monad	http://www.cas.mcmaster.ca/~carette/pa_monad/
 
 If you have some kind of package management software installed on your
-machine (e.g. apt-get on linux, or darwinports on a mac), these two
-packages might be readily available.
-
-In order to support monadic expressions in Ocaml similar to those
-found in Haskell, the pa_monad syntax extension has been used. This
-extension to the ocaml compiler is already included in the pa_monad
-directory. Further information about pa_monad can be found at
-
-http://www.cas.mcmaster.ca/~carette/pa_monad/
+machine (e.g. apt-get on linux, or darwinports on a mac), some of
+these packages might be readily available.
 
 COMPILATION
 -----------
 
 After the above prerequisites have been satisfied, you may build the
 program by simply calling `make` on the CLI. After successful
-compilation, you can start the program with by calling `./aisss06.native`
+compilation, you can start the program by calling `./aisss06.native`
 There are two build targets: The default one is 'aisss06.native', which is
 compiled to machine code rather than to bytecode like
 'aisss06.byte. Bytecode compilation is faster though and can be used to
