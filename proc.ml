@@ -374,7 +374,7 @@ let add_ground z w =
 
 let add_rhouse o ex wld =
   perform
-    r <-- rndi 2 6;
+    r <-- rndi 2 10;
     r2 <-- rnd 0.0 1.0;
     rm <-- rndi 0 3;
     r3 <-- rnd3 (6.0,5.0,2.5) (10.0,8.0,3.2);
