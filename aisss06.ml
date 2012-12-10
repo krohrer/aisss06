@@ -163,7 +163,7 @@ object (self)
         seed <- Random.bits ();
         self#init
     | 'p' | 'P' ->
-	let follow ~src ~field ~dst =
+        let follow ~src ~field ~dst =
 	  Obj.tag dst < Obj.no_scan_tag && Obj.size dst = 4
 	in
 	let context = Inspect.Dot.make_context ~max_fields:0 ~follow () in
