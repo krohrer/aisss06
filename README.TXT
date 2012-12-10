@@ -2,7 +2,7 @@ Project for the Advanced Image Synthesis Course at ETHZ, Summer 06.
 
           ______                                           _______     _____
   _____  /____/|    Procedural Buildings                  /     /|    /___/|
- /___/| |    | |    Revision 113405072006                /_____/ |  _|   | |
+ /___/| |    | |    Last updated : 11 Dec. 2012          /_____/ |  _|   | |
 |   | |_|    | |                                        |     |  | /_|   | |
 |   |/__|    | |    Author : Kaspar Rohrer              |     | / |  |   | |
 |___|___|____|/     E-mail : kaspar.rohrer@gmail.com    |_____|/  |__|___|/
