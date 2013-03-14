@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Technology</title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h1>Technology</h1>
+
+<h3>The Technology Behind It</h3>
+<p>
+In order to be able to construct geometry and refine it as neccessary, I've implemented CSG using BSP-trees. Using a functional language (Ocaml in this case), I was able to implement the whole application in about 10 days. Not having to care about low-level stuff like allocating and freeing memory and declaring the type of every variable helped a lot. The only errors I encountered during the process where logical ones. Once I got a better understanding of the problem, solving these errors was easy.
+</p>
+
+<h3>A Language To Generate Geometry</h3>
+<p>
+Because I wanted to be able to construct geometry from some kind of rule based system, I decided to implement a small DSL directly in Ocaml. After the first few attempts, I realized that I was trying to reinvent the wheel by introducing monadic programming into Ocaml. Knowing a bit of Haskell, I searched for a syntax extension to Ocaml (Ocaml has built-in support for this) that would enable me to write monadic expressions similar to those found in Haskell. After a quick search, I found this <a target="_blank" href="http://www.cas.mcmaster.ca/~carette/pa_monad/">Syntax extension for Monads in Ocaml</a>.<br/>
+Pulling everything together resulted in the definition of <a href="#proc3d">this little DSL</a>. Everything you see on the <a href="screenshots.html">screenshots page</a> is a result of running a little program written in this language.<br/>
+<br/>
+</p>
+<div id="proc3d" style="text-align:left;color:#000000; background-color:#ffffff; border:solid black 1px; padding:0.5em 1em 0.5em 1em; overflow:auto;font-size:small; font-family:monospace; "><span style="color:#6c0540;">open</span> <span style="color:#646419;">Math3d</span><br />
+<span style="color:#6c0540;">open</span> <span style="color:#646419;">Geom3d</span><br />
+<span style="color:#6c0540;">open</span> <span style="color:#646419;">BspTree3d</span><br />
+<br />
+<span style="color:#6c0540;">type</span> matter = <span style="color:#646419;">BspTree3d</span>.t<br />
+<span style="color:#6c0540;">type</span> material = <span style="color:#646419;">BspTree3d</span>.material_t<br />
+<br />
+<span style="color:#236e25;">(*- monad stuff --------------------------------------------------------------*)</span><br />
+<br />
+<span style="color:#6c0540;">type</span> state<br />
+<span style="color:#6c0540;">type</span> 'a mproc = state -&gt; ('a*state)<br />
+<br />
+<span style="color:#236e25;">(* bind *)</span><br />
+<span style="color:#6c0540;">val</span> bind &nbsp;&nbsp;&nbsp;: 'a mproc -&gt; ('a -&gt; 'b mproc) -&gt; 'b mproc<br />
+<span style="color:#6c0540;">val</span> ( &gt;&gt;= ) : 'a mproc -&gt; ('a -&gt; 'b mproc) -&gt; 'b mproc<br />
+<span style="color:#6c0540;">val</span> ( &gt;&gt;&gt; ) : 'a mproc -&gt; 'b mproc -&gt; 'b mproc<br />
+<span style="color:#6c0540;">val</span> ( --&gt; ) : 'a -&gt; ('a -&gt; 'b mproc) -&gt; 'b mproc<br />
+<br />
+<span style="color:#236e25;">(* like return in haskell *)</span><br />
+<span style="color:#6c0540;">val</span> <span style="color:#6c0540;">ret</span> : 'a -&gt; 'a mproc<br />
+<br />
+<span style="color:#236e25;">(* shamelessly taken from haskell, added some more like mif and mrep *)</span><br />
+<span style="color:#6c0540;">val</span> mseq &nbsp;&nbsp;&nbsp;: ('a mproc) list -&gt; ('a list) mproc<br />
+<span style="color:#6c0540;">val</span> mrep &nbsp;&nbsp;&nbsp;: int -&gt; ('a -&gt; 'a mproc) -&gt; 'a -&gt; 'a mproc<br />
+<span style="color:#6c0540;">val</span> mmap &nbsp;&nbsp;&nbsp;: ('a -&gt; 'b mproc) -&gt; 'a list -&gt; ('b list) mproc<br />
+<span style="color:#6c0540;">val</span> mfold &nbsp;&nbsp;: ('a -&gt; 'b -&gt; 'a mproc) -&gt; 'a -&gt; 'b list -&gt; 'a mproc<br />
+<span style="color:#6c0540;">val</span> mfold' &nbsp;: ('a -&gt; 'b -&gt; 'a mproc) -&gt; 'b list -&gt; ('a -&gt; 'a mproc)<br />
+<br />
+<span style="color:#6c0540;">val</span> mwhen &nbsp;&nbsp;: bool -&gt; unit mproc -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> munless : bool -&gt; unit mproc -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> mwhen' &nbsp;&nbsp;&nbsp;: bool -&gt; ('a -&gt; 'a mproc) -&gt; 'a -&gt; 'a mproc<br />
+<span style="color:#6c0540;">val</span> munless' &nbsp;: bool -&gt; ('a -&gt; 'a mproc) -&gt; 'a -&gt; 'a mproc<br />
+<span style="color:#6c0540;">val</span> mif &nbsp;&nbsp;&nbsp;&nbsp;: bool -&gt; 'a mproc -&gt; 'a mproc -&gt; 'a mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> mlift &nbsp;&nbsp;: ('a -&gt; 'b) -&gt; ('a mproc -&gt; 'b mproc)<br />
+<span style="color:#6c0540;">val</span> mlift2 &nbsp;: ('a -&gt; 'b -&gt; 'c) -&gt; ('a mproc -&gt; 'b mproc -&gt; 'c mproc)<br />
+<br />
+<span style="color:#236e25;">(*- proc geometry stuff ------------------------------------------------------*)</span><br />
+<br />
+<span style="color:#6c0540;">val</span> emerge : dim:float -&gt; lod:int -&gt; transform:<span style="color:#646419;">AT3</span>.t -&gt; seed:int array -&gt; matter mproc -&gt; matter<br />
+<br />
+<span style="color:#236e25;">(* save state *)</span><br />
+<span style="color:#6c0540;">val</span> call : 'a mproc -&gt; 'a mproc<br />
+<span style="color:#6c0540;">val</span> call1 : ('a -&gt; 'b mproc) -&gt; 'a -&gt; 'b mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> pass &nbsp;&nbsp;: 'a mproc -&gt; ('b -&gt; 'b mproc)<br />
+<br />
+<span style="color:#6c0540;">val</span> detail : int -&gt; 'a mproc -&gt; 'a mproc -&gt; 'a mproc<br />
+<span style="color:#6c0540;">val</span> lod : int -&gt; (matter -&gt; matter mproc) -&gt; matter -&gt; matter mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> void : matter mproc<br />
+<span style="color:#6c0540;">val</span> ubox &nbsp;: matter mproc<br />
+<span style="color:#6c0540;">val</span> box &nbsp;&nbsp;: <span style="color:#646419;">Point</span>.t -&gt; <span style="color:#646419;">Point</span>.t -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> usphere &nbsp;&nbsp;: matter mproc<br />
+<span style="color:#6c0540;">val</span> sphere &nbsp;&nbsp;&nbsp;: <span style="color:#646419;">Point</span>.t -&gt; float -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> ucylinder : matter mproc<br />
+<span style="color:#6c0540;">val</span> halfp : <span style="color:#646419;">Plane</span>.t -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> half &nbsp;: <span style="color:#646419;">Point</span>.t -&gt; <span style="color:#646419;">V3</span>.t -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> half3 : <span style="color:#646419;">Point</span>.t -&gt; <span style="color:#646419;">Point</span>.t -&gt; <span style="color:#646419;">Point</span>.t -&gt; matter mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> ( ~~~ ) : matter -&gt; matter<br />
+<span style="color:#6c0540;">val</span> ( +++ ) : matter -&gt; matter -&gt; matter<br />
+<span style="color:#6c0540;">val</span> ( --- ) : matter -&gt; matter -&gt; matter<br />
+<span style="color:#6c0540;">val</span> ( *** ) : matter -&gt; matter -&gt; matter<br />
+<span style="color:#6c0540;">val</span> ( %%% ) : matter -&gt; matter -&gt; matter<br />
+<br />
+<span style="color:#6c0540;">val</span> ( &gt;&gt;++ ) : matter mproc -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> ( &gt;&gt;-- ) : matter mproc -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> ( &gt;&gt;** ) : matter mproc -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> ( &gt;&gt;%% ) : matter mproc -&gt; matter mproc -&gt; matter mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> mat_all : material<br />
+<span style="color:#6c0540;">val</span> mat_none : material<br />
+<span style="color:#6c0540;">val</span> unity : material -&gt; matter<br />
+<br />
+<span style="color:#6c0540;">val</span> unite &nbsp;&nbsp;&nbsp;&nbsp;: matter -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> diff &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: matter -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> symdiff &nbsp;&nbsp;: matter -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> intersect : matter -&gt; matter mproc -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> unite' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> diff' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> symdiff' &nbsp;&nbsp;&nbsp;: matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> intersect' &nbsp;: matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> lunite &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: int -&gt; matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> ldiff &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: int -&gt; matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> lsymdiff &nbsp;&nbsp;&nbsp;: int -&gt; matter mproc -&gt; matter -&gt; matter mproc<br />
+<span style="color:#6c0540;">val</span> lintersect &nbsp;: int -&gt; matter mproc -&gt; matter -&gt; matter mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> rnd &nbsp;&nbsp;: float -&gt; float -&gt; float mproc<br />
+<span style="color:#6c0540;">val</span> rnd3 &nbsp;: <span style="color:#646419;">Point</span>.t -&gt; <span style="color:#646419;">Point</span>.t -&gt; <span style="color:#646419;">Point</span>.t mproc<br />
+<br />
+<span style="color:#6c0540;">val</span> mat : material -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> tfm : <span style="color:#646419;">AT3</span>.t -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> tlx : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> tly : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> tlz : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> tl3 : <span style="color:#646419;">V3</span>.t &nbsp;-&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> scx : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> scy : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> scz : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> sc1 : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> sc3 : <span style="color:#646419;">V3</span>.t &nbsp;-&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> rox : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> roy : float -&gt; unit mproc<br />
+<span style="color:#6c0540;">val</span> roz : float -&gt; unit mproc<br />
+</div>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Development</title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h1>Development</h1>
+
+<h3>Messing around with Ocaml and BSP-Trees</h3>
+<p>
+<img alt="dev snapshot 2" src="images/aisss06-2.png"/>
+Finally getting somewhere. Still some issues with back-to-front rendering.
+</p>
+
+<h3>Ladies and Gentlemen, we present to you: THE PROTO-HOUSE</h3>
+<p>
+<img alt="dev snapshot 4" src="images/aisss06-4.png"/>
+Aehm, YESS!!! Almost there, NOT. But Bsp-tree merging seems to work correctly, though.
+</p>
+
+<h3>Bsp-tree stress test using l-systems</h3>
+<p>
+<img alt="dev snapshot 6" src="images/aisss06-6.png"/>
+Uhm, yeah. Let me present the first procedural geometry picture. Or should I say functional geometry? Whatever. The black lines are the outlines of the Bsp-cells. I though it would be funny to generate some plants also. But obviously Bsp-trees, despite their name, are not that well suited to organic shapes.
+<br/>
+</p>
+
+<h3>I can see where this is going now</h3>
+<p>
+<img alt="dev snapshot 7" src="images/aisss06-7.png"/>
+Ah, the beauty of functional languages (Ocaml here). We just define our own DSL, et voila:
+</p>
+<div style="text-align:left;color:#000000; background-color:#ffffff; border:solid black 1px; padding:0.5em 1em 0.5em 1em; overflow:auto;font-size:small; font-family:monospace; "><span style="color:#6c0540;">let</span> <span style="color:#6c0540;">rec</span> lsys st =<br />
+<span style="color:#6c0540;">begin</span><br />
+&nbsp;&nbsp;more_detail<br />
+&nbsp;&nbsp;<span style="color:#6c0540;">begin</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;sc1 <span style="color:#196464;">0.5</span> @@@ ubox<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&gt;&gt;+ (tl3 ( <span style="color:#196464;">1.0</span>, <span style="color:#196464;">1.0</span>,<span style="color:#196464;">1.0</span>) *** sc1 <span style="color:#196464;">0.5</span> @@@ lsys)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&gt;&gt;+ (tl3 (-<span style="color:#196464;">1.0</span>, <span style="color:#196464;">1.0</span>,<span style="color:#196464;">1.0</span>) *** sc1 <span style="color:#196464;">0.5</span> @@@ lsys)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&gt;&gt;+ (tl3 ( <span style="color:#196464;">1.0</span>,-<span style="color:#196464;">1.0</span>,<span style="color:#196464;">1.0</span>) *** sc1 <span style="color:#196464;">0.5</span> @@@ lsys)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&gt;&gt;+ (tl3 (-<span style="color:#196464;">1.0</span>,-<span style="color:#196464;">1.0</span>,<span style="color:#196464;">1.0</span>) *** sc1 <span style="color:#196464;">0.5</span> @@@ lsys)<br />
+&nbsp;&nbsp;<span style="color:#6c0540;">end</span><br />
+&nbsp;&nbsp;<span style="color:#6c0540;">begin</span><br />
+&nbsp;&nbsp;&nbsp;&nbsp;sc1 <span style="color:#196464;">0.5</span> @@@ ubox<br />
+&nbsp;&nbsp;<span style="color:#6c0540;">end</span><br />
+<span style="color:#6c0540;">end</span> st<br />
+</div>
+<p>
+I'm in awe. No, really. Ocaml is a great language for tasks like these (rapid prototyping and stuff). I was able to go from zero to what you see here in about two weeks. Not having to care about all the low-level stuff just makes things a whole lot easier. I'll probably never go back to C++, now that I have seen the light. Haskell was a close second to Ocaml, and is probably next on my list. Especially for things like monads and type classes.
+</p>
+
+<h3>Buildings? Not quite yet. Modern art, maybe.</h3>
+<p>
+<img alt="dev snapshot 8" src="images/aisss06-8.png"/>
+<img alt="dev snapshot 9" src="images/aisss06-9.png"/>
+Hm, getting there. These two snapshots show the LoD mechanism in action. In the first picture, the towers consist of only the hull. In the second picture, each level of a tower has been hollowed out to form some kind of room. Windows and doors could be added in a next step.<br/>
+Unfortunately, the LoD-mechanism is neither dynamic, nor view-dependent and can only be changed globally. Bsp-tree generation, however, is quite fast (&lt; 1 sec for this scene). At least, this allows the LoD to be changed at interactive framerates.
+</p>
+
+<h3>Blockham city</h3>
+<p>
+<img alt="dev snapshot 10" src="images/aisss06-10.png"/>
+Where's spiderman?
+</p>
+
+<h3>Full circle</h3>
+<p>
+<img alt="dev snapshot 11" src="images/aisss06-11.png"/>
+Huzzah! Added materials (see above) and changed to a monadic approach. The code now even becomes readable:
+</p>
+<div style="text-align:left;color:#000000; background-color:#ffffff; border:solid black 1px; padding:0.5em 1em 0.5em 1em; overflow:auto;font-size:small; font-family:monospace; "><span style="color:#6c0540;">let</span> ground =<br />
+<span style="color:#6c0540;">perform</span><br />
+&nbsp;&nbsp;mat earth;<br />
+&nbsp;&nbsp;half (<span style="color:#646419;">Plane</span>.create ~a:<span style="color:#646419;">V3</span>.zero ~n:<span style="color:#646419;">V3</span>.ez)<br />
+<br />
+<span style="color:#6c0540;">let</span> add_cube w i =<br />
+<span style="color:#6c0540;">perform</span><br />
+&nbsp;&nbsp;mat i;<br />
+&nbsp;&nbsp;tly <span style="color:#196464;">0.5</span>;<br />
+&nbsp;&nbsp;rox <span style="color:#196464;">4.0</span>;<br />
+&nbsp;&nbsp;tly <span style="color:#196464;">0.5</span>;<br />
+&nbsp;&nbsp;unite w ubox<br />
+<br />
+<span style="color:#6c0540;">let</span> ring =<br />
+<span style="color:#6c0540;">perform</span><br />
+&nbsp;&nbsp;g &lt;-- ground;<br />
+&nbsp;&nbsp;mfold add_cube g (<span style="color:#646419;">Ext</span>.<span style="color:#646419;">List</span>.generate (<span style="color:#6c0540;">fun</span> x -&gt; x) <span style="color:#196464;">0</span> <span style="color:#196464;">89</span>)</div>
+
+</body>
+</html>

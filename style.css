@@ -1,0 +1,86 @@
+/*___________________________________________________________________________//
+
+CSS definitions
+
+Author : Kaspar Rohrer
+Last change : 203602072006
+
+//___________________________________________________________________________
+*/
+
+body {
+	font-family:Helvetica, Arial, sans-serif;
+	background-color:#FFFFFF;
+	color:#000000;
+	font-weight:normal;
+	text-align:left;
+}
+
+table {
+	border:none;
+	padding:4px;
+}
+
+td {
+	font-family:Helvetica, Arial, sans-serif;
+    background-color:#FFFFFF;
+	color:#000033;
+	font-weight:normal;
+	text-align:left;
+	padding:2px 10px 2px 10px;
+}
+
+
+th {
+	background-color:#000033;
+	color:#FFFFFF;
+	text-align:left;
+	padding:2px 10px 2px 10px;
+}
+
+h1 {
+    padding:1px;
+	text-align:left;
+}
+
+h3 {
+    padding:1px;
+    clear:both;
+	text-align:left;
+}
+
+img {
+    float:left;
+    border-style:none;
+    padding-right:1em;
+    padding-bottom:1em;
+}
+
+p {
+    clear:both;
+}
+
+/*-[ LINKS ]-----------------------------------------------------------------*/
+
+a {
+    background-color:#FFFFFF;
+	color:#880000;
+	text-decoration:none;
+	font-weight:bold;
+}
+
+a:link {
+    background-color:#FFFFFF;
+	color:#880000;
+}
+
+a:visited {
+    background-color:#FFFFFF;
+    color:#000033;
+}
+
+a:hover {
+    background-color:#FFFFFF;
+    color:#FF0000;
+}
+0
